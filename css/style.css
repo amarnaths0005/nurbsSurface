@@ -1,0 +1,62 @@
+.container {
+    display: grid;
+    grid-template-columns:2fr 3fr;
+}
+
+#leftPanel {
+    background: #330066;
+}
+
+* {
+    font-family: Arial, Verdana, sans-serif;
+    color: whitesmoke;
+    text-align: center;
+}
+
+.deg {
+    color: black; 
+}
+
+button {
+    background-color: darkslateblue;
+    color: whitesmoke; 
+}
+
+table {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+tr {
+    background: dimgray;
+    border-collapse: collapse;     
+}
+
+table tbody { 
+    height: 200px; 
+    overflow-y: scroll; 
+    display: block; 
+}
+
+.selected {
+    background-color: darkred;
+    color: #FFFFFF;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 400px;
+    background-color: rgb(233, 202, 202);
+    color: rgb(18, 7, 56);
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
