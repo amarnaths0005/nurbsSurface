@@ -3,7 +3,7 @@ HTML Application to draw and modify a NURBS Surface in 3D
 
 NURBS Surface = Non Uniform Rational B-Spline Surface
 
-/* Requirements:
+Requirements:
    1. Should enable the user to modify the x, y, z and h coordinates (homogeneous coordinates) 
        of 49 control points constituting a NURBS Surface (7 x 7 grid of control points).
        The range for coordinates of the control points should be [-1,1]. The user should 
