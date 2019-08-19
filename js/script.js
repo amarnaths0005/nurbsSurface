@@ -48,7 +48,7 @@ let degreeU, degreeW, selUdegree, selWdegree;
 let knotVectorU = [], knotVectorW = [];
 let nurbsSurface;
 let surfacePoints = [];
-let noDivisions = 20;
+let noDivisions = 25;
 let step, width, tableData;
 let surfaceMesh, lineWire, wireCheck;
 let selectedRow, selectedi, selectedj;
@@ -403,7 +403,6 @@ function editRow(i, j) {
     opw.innerHTML = points[i][j].w.toFixed(3);
 
     showCurrentPoint(points[i][j].x, points[i][j].y, points[i][j].z);
-    plotControlQuadrilaterals();
 }
 
 function highlightSelectedRow() {
