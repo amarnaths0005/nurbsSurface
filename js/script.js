@@ -1,5 +1,6 @@
 // HTML Program to draw and manipulate a NURBS Surface
 // Written by Amarnath S, amarnaths.codeproject@gmail.com, July 2019
+// Modified and fixed some bugs - August 2019
 
 // NURBS Surface = Non Uniform Rational B-Spline Surface
 
@@ -43,12 +44,11 @@ let arrowDirection2 = new THREE.Vector3();
 let arrowDirection3 = new THREE.Vector3();
 let noPoints = 7;
 let points = new Array(noPoints);
-let pointsOnScene = new Array(noPoints);
 let degreeU, degreeW, selUdegree, selWdegree;
 let knotVectorU = [], knotVectorW = [];
 let nurbsSurface;
 let surfacePoints = [];
-let noDivisions = 40;
+let noDivisions = 20;
 let step, width, tableData;
 let surfaceMesh, lineWire, wireCheck;
 let selectedRow, selectedi, selectedj;
@@ -56,6 +56,7 @@ let pointToShow, pointxRange, pointyRange, pointzRange, pointwRange;
 let opx, opy, opz, opw;
 let controlx, controly, controlz, controlw;
 let pointUW, uRange, wRange, uValue, wValue;
+let controlQuadrilateral = new Array(noPoints - 1);
 
 window.onload = init;
 
@@ -70,13 +71,16 @@ function init() {
 
     for (let i = 0; i < points.length; i++) {
         points[i] = new Array(noPoints);
-        pointsOnScene[i] = new Array(noPoints);
     }
 
     for (let j = 0; j < noPoints; ++j) {
         for (let i = 0; i < noPoints; ++i) {
             points[i][j] = new THREE.Vector4(0.0, 0.0, 0.0, 1.0);
         }
+    }
+
+    for (let i = 0; i < noPoints - 1; ++i) {
+        controlQuadrilateral[i] = new Array(noPoints - 1);
     }
 
     initializeValues();
@@ -140,8 +144,8 @@ function init() {
         document.getElementById('opPointx').textContent = controlx.toFixed(3);
         points[selectedi][selectedj].x = controlx;
         updatePointsTable();
+        plotControlQuadrilaterals();
         computeNurbsSurface();
-        //renderLineAndNurbsCurve();
         showCurrentPoint(points[selectedi][selectedj].x,
             points[selectedi][selectedj].y, points[selectedi][selectedj].z);
         handleUWValue();
@@ -153,6 +157,7 @@ function init() {
         document.getElementById('opPointy').textContent = controly.toFixed(3);
         points[selectedi][selectedj].y = controly;
         updatePointsTable();
+        plotControlQuadrilaterals();
         computeNurbsSurface();
         showCurrentPoint(points[selectedi][selectedj].x,
             points[selectedi][selectedj].y, points[selectedi][selectedj].z);
@@ -165,10 +170,11 @@ function init() {
         document.getElementById('opPointz').textContent = controlz.toFixed(3);
         points[selectedi][selectedj].z = controlz;
         updatePointsTable();
+        plotControlQuadrilaterals();
         computeNurbsSurface();
         showCurrentPoint(points[selectedi][selectedj].x,
             points[selectedi][selectedj].y, points[selectedi][selectedj].z);
-            handleUWValue();
+        handleUWValue();
         highlightSelectedRow();
     }, false);
 
@@ -177,10 +183,11 @@ function init() {
         document.getElementById('opPointw').textContent = controlw.toFixed(3);
         points[selectedi][selectedj].w = controlw;
         updatePointsTable();
+        plotControlQuadrilaterals();
         computeNurbsSurface();
         showCurrentPoint(points[selectedi][selectedj].x,
             points[selectedi][selectedj].y, points[selectedi][selectedj].z);
-            handleUWValue();
+        handleUWValue();
         highlightSelectedRow();
     }, false);
 
@@ -245,7 +252,7 @@ function init() {
     }, false);
 
     setupWireframeBox();
-    plotControlLines();
+    plotControlQuadrilaterals();
     computeNurbsSurface();
     handleCameraAngle();
     handleUWValue();
@@ -261,6 +268,20 @@ function init() {
 }
 
 function initializeValues() {
+
+    // For a 3 x 3 grid, we use this set of control points
+    // points[0][0].x = 0.1; points[0][0].y = -1.0; points[0][0].z = -1.0;
+    // points[0][1].x = -0.1; points[0][1].y = -1.0; points[0][1].z = 0.0;
+    // points[0][2].x = 0.1; points[0][2].y = -1.0; points[0][2].z = 1.0;
+
+    // points[1][0].x = -0.1; points[1][0].y = 0.0; points[1][0].z = -1.0;
+    // points[1][1].x = 0.1; points[1][1].y = 0.0; points[1][1].z = 0.0;
+    // points[1][2].x = -0.1; points[1][2].y = 0.0; points[1][2].z = 1.0;
+
+    // points[2][0].x = 0.1; points[2][0].y = 1.0; points[2][0].z = -1.0;
+    // points[2][1].x = -0.1; points[2][1].y = 1.0; points[2][1].z = 0.0;
+    // points[2][2].x = 0.1; points[2][2].y = 1.0; points[2][2].z = 1.0;
+
     points[0][0].x = 0.1; points[0][0].y = -1.00; points[0][0].z = -1.0;
     points[0][1].x = -0.1; points[0][1].y = -1.00; points[0][1].z = -0.66;
     points[0][2].x = 0.1; points[0][2].y = -1.00; points[0][2].z = -0.33;
@@ -342,8 +363,8 @@ function updatePointsTable() {
     for (let j = 0; j < noPoints; ++j) {
         for (let i = 0; i < noPoints; ++i) {
             tableData += '<tr>';
-            let i1 = 'Point ' + j;
-            let i2 = i1 + i;
+            let i1 = 'Point ' + i;
+            let i2 = i1 + j;
 
             tableData += '<td> ' + i2 + '</td>';
             tableData += '<td> ' + points[i][j].x.toFixed(3) + '</td>';
@@ -361,8 +382,8 @@ function editRow(i, j) {
     selectedRow = i;
     selectedi = i;
     selectedj = j;
-    let i1 = 'Point ' + j;
-    let i2 = i1 + i;
+    let i1 = 'Point ' + i;
+    let i2 = i1 + j;
 
     highlightSelectedRow();
 
@@ -382,7 +403,7 @@ function editRow(i, j) {
     opw.innerHTML = points[i][j].w.toFixed(3);
 
     showCurrentPoint(points[i][j].x, points[i][j].y, points[i][j].z);
-    //handleUValue();
+    plotControlQuadrilaterals();
 }
 
 function highlightSelectedRow() {
@@ -459,31 +480,13 @@ function handleWireframe() {
     computeNurbsSurface();
 }
 
-function plotPoints() {
-    for (let j = 0; j < noPoints; ++j) {
-        for (let i = 0; i < noPoints; ++i) {
-            scene.remove(pointsOnScene[i][j]);
+function plotControlQuadrilaterals() {
+    for (let j = 0; j < noPoints - 1; ++j) {
+        for (let i = 0; i < noPoints - 1; ++i) {
+            scene.remove(controlQuadrilateral[i][j]);
         }
     }
 
-    let sphereGeometry = new THREE.SphereGeometry(.015, 20, 20);
-    let sphereMaterial = new THREE.MeshBasicMaterial({
-        color: 0xfa8072,
-        wireframe: false
-    });
-
-    for (let j = 0; j < noPoints; ++j) {
-        for (let i = 0; i < noPoints; ++i) {
-            pointsOnScene[i][j] = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            pointsOnScene[i][j].position.x = points[i][j].x;
-            pointsOnScene[i][j].position.y = points[i][j].y;
-            pointsOnScene[i][j].position.z = points[i][j].z;
-            scene.add(pointsOnScene[i][j]);
-        }
-    }
-}
-
-function plotControlLines() {
     let material = new THREE.LineBasicMaterial({
         color: 0xffff00,
         opacity: 0.25,
@@ -502,8 +505,8 @@ function plotControlLines() {
             geom.vertices.push(poi3);
             geom.vertices.push(poi4);
             geom.vertices.push(poi1);
-            let lineControl = new THREE.Line(geom, material);
-            scene.add(lineControl);
+            controlQuadrilateral[i][j] = new THREE.Line(geom, material);
+            scene.add(controlQuadrilateral[i][j]);
         }
     }
 }
